@@ -2,8 +2,10 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task } from '@/types/task';
+import { formatRelativeDate } from '@/utils/format-date';
 
 interface TaskListItemProps {
   task: Task;
@@ -12,10 +14,14 @@ interface TaskListItemProps {
 }
 
 export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProps) {
+  const theme = useTheme();
   const isCompleted = task.status === 'completed';
-  const formattedDate = new Date(task.createdAt).toLocaleDateString();
+  const formattedDate = formatRelativeDate(task.createdAt);
 
-  const content = (
+  const statusSurface = isCompleted ? theme.successSurface : theme.warningSurface;
+  const statusColor = isCompleted ? theme.success : theme.warning;
+
+  return (
     <ThemedView style={styles.row}>
       {onToggleStatus && (
         <Pressable
@@ -23,7 +29,12 @@ export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProp
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isCompleted }}>
-          <ThemedView type="backgroundSelected" style={[styles.checkbox, isCompleted && styles.checkboxChecked]}>
+          <ThemedView
+            style={[
+              styles.checkbox,
+              { borderColor: theme.border },
+              isCompleted && { backgroundColor: theme.primary, borderColor: theme.primary },
+            ]}>
             {isCompleted && (
               <ThemedText type="smallBold" style={styles.checkmark}>
                 ✓
@@ -37,7 +48,7 @@ export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProp
         onPress={onPress}
         disabled={!onPress}
         style={({ pressed }) => [styles.content, pressed && onPress && styles.pressed]}>
-        <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedView type="card" style={[styles.card, CardShadow, { borderColor: theme.border }]}>
           <ThemedView style={styles.header}>
             <ThemedText
               type="default"
@@ -46,8 +57,10 @@ export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProp
               numberOfLines={1}>
               {task.title}
             </ThemedText>
-            <ThemedView type="backgroundSelected" style={styles.badge}>
-              <ThemedText type="small">{isCompleted ? 'Completed' : 'Pending'}</ThemedText>
+            <ThemedView style={[styles.badge, { backgroundColor: statusSurface }]}>
+              <ThemedText type="small" style={{ color: statusColor }}>
+                {isCompleted ? 'Completed' : 'Pending'}
+              </ThemedText>
             </ThemedView>
           </ThemedView>
 
@@ -64,8 +77,6 @@ export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProp
       </Pressable>
     </ThemedView>
   );
-
-  return content;
 }
 
 const styles = StyleSheet.create({
@@ -81,11 +92,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#3C87F7',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -96,6 +105,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Spacing.three,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
   },

@@ -8,12 +8,12 @@ const ENGLISH_TASK_CONTENT = [
     description: 'Milk, eggs, and bread',
   },
   {
-    title: 'Finish React Native exercise',
-    description: 'Complete the task list and details screens',
+    title: 'Code today',
+    description: 'Work on the React Native task app',
   },
   {
-    title: 'Update README',
-    description: 'Add setup instructions and screenshots',
+    title: 'Finish that task today',
+    description: 'Wrap up remaining features before EOD',
   },
 ] as const;
 

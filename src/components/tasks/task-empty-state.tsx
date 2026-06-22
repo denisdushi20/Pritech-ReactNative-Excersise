@@ -15,7 +15,9 @@ export function TaskEmptyState({
 }: TaskEmptyStateProps) {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="subtitle">{title}</ThemedText>
+      <ThemedText type="smallBold" style={styles.title}>
+        {title}
+      </ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
         {subtitle}
       </ThemedText>
@@ -30,6 +32,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.two,
     paddingVertical: Spacing.six,
+  },
+  title: {
+    fontSize: 18,
   },
   subtitle: {
     textAlign: 'center',

@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import { useTasks } from '@/contexts/tasks-context';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function TaskDetailsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getTaskById, toggleTaskStatus, deleteTask } = useTasks();
   const task = typeof id === 'string' ? getTaskById(id) : undefined;
@@ -31,6 +33,9 @@ export default function TaskDetailsScreen() {
     day: 'numeric',
   });
 
+  const statusSurface = isCompleted ? theme.successSurface : theme.warningSurface;
+  const statusColor = isCompleted ? theme.success : theme.warning;
+
   const handleToggle = () => {
     toggleTaskStatus(task.id);
   };
@@ -40,31 +45,37 @@ export default function TaskDetailsScreen() {
     router.back();
   };
 
+  const handleEdit = () => {
+    router.push({ pathname: '/task/[id]/edit', params: { id: task.id } });
+  };
+
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: 'Task Details' }} />
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ThemedView style={styles.header}>
+          <ThemedView type="card" style={[styles.headerCard, CardShadow, { borderColor: theme.border }]}>
             <ThemedText
               type="subtitle"
               themeColor={isCompleted ? 'textSecondary' : 'text'}
-              style={isCompleted && styles.completedTitle}>
+              style={[styles.taskTitle, isCompleted && styles.completedTitle]}>
               {task.title}
             </ThemedText>
-            <ThemedView type="backgroundElement" style={styles.badge}>
-              <ThemedText type="small">{isCompleted ? 'Completed' : 'Pending'}</ThemedText>
+            <ThemedView style={[styles.badge, { backgroundColor: statusSurface }]}>
+              <ThemedText type="small" style={{ color: statusColor }}>
+                {isCompleted ? 'Completed' : 'Pending'}
+              </ThemedText>
             </ThemedView>
           </ThemedView>
 
-          <ThemedView type="backgroundElement" style={styles.section}>
+          <ThemedView type="card" style={[styles.section, CardShadow, { borderColor: theme.border }]}>
             <ThemedText type="smallBold">Description</ThemedText>
             <ThemedText type="default" themeColor="textSecondary">
               {task.description.length > 0 ? task.description : 'No description provided.'}
             </ThemedText>
           </ThemedView>
 
-          <ThemedView type="backgroundElement" style={styles.section}>
+          <ThemedView type="card" style={[styles.section, CardShadow, { borderColor: theme.border }]}>
             <ThemedText type="smallBold">Created</ThemedText>
             <ThemedText type="default" themeColor="textSecondary">
               {formattedDate}
@@ -73,17 +84,36 @@ export default function TaskDetailsScreen() {
 
           <ThemedView style={styles.actions}>
             <Pressable
+              onPress={handleEdit}
+              style={({ pressed }) => [
+                styles.button,
+                styles.secondaryButton,
+                { borderColor: theme.border },
+                pressed && styles.pressed,
+              ]}>
+              <ThemedText type="smallBold">Edit Task</ThemedText>
+            </Pressable>
+
+            <Pressable
               onPress={handleToggle}
-              style={({ pressed }) => [styles.button, styles.primaryButton, pressed && styles.pressed]}>
-              <ThemedText type="smallBold" style={styles.primaryButtonText}>
+              style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: theme.primary },
+                pressed && styles.pressed,
+              ]}>
+              <ThemedText type="smallBold" style={{ color: theme.primaryText }}>
                 {isCompleted ? 'Mark as Pending' : 'Mark as Completed'}
               </ThemedText>
             </Pressable>
 
             <Pressable
               onPress={handleDelete}
-              style={({ pressed }) => [styles.button, styles.dangerButton, pressed && styles.pressed]}>
-              <ThemedText type="smallBold" style={styles.dangerButtonText}>
+              style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: theme.dangerSurface },
+                pressed && styles.pressed,
+              ]}>
+              <ThemedText type="smallBold" style={{ color: theme.danger }}>
                 Delete Task
               </ThemedText>
             </Pressable>
@@ -111,8 +141,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     gap: Spacing.three,
   },
-  header: {
+  headerCard: {
+    borderRadius: Spacing.three,
+    borderWidth: 1,
+    padding: Spacing.three,
     gap: Spacing.three,
+  },
+  taskTitle: {
+    fontSize: 24,
+    lineHeight: 30,
   },
   completedTitle: {
     textDecorationLine: 'line-through',
@@ -125,6 +162,7 @@ const styles = StyleSheet.create({
   },
   section: {
     borderRadius: Spacing.three,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -133,21 +171,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   button: {
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
-  primaryButton: {
-    backgroundColor: '#3C87F7',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-  },
-  dangerButton: {
-    backgroundColor: '#FEECEC',
-  },
-  dangerButtonText: {
-    color: '#E5484D',
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
   },
   pressed: {
     opacity: 0.7,

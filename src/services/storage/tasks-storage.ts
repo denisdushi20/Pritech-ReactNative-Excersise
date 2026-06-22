@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { Task } from '@/types/task';
 
-const TASKS_STORAGE_KEY = '@pritech/tasks-v2';
+const TASKS_STORAGE_KEY = '@pritech/tasks-v3';
 
 export async function loadTasksFromStorage(): Promise<Task[]> {
   const storedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);

@@ -6,19 +6,62 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TaskEmptyState } from '@/components/tasks/task-empty-state';
 import { TaskListItem } from '@/components/tasks/task-list-item';
 import { TaskListToolbar } from '@/components/tasks/task-list-toolbar';
+import { TaskStatsDashboard } from '@/components/tasks/task-stats-dashboard';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/contexts/tasks-context';
+import { useTheme } from '@/hooks/use-theme';
 import type { TaskFilterStatus } from '@/types/task';
+import { formatFilteredTaskSummary } from '@/utils/format-date';
 import { filterTasks } from '@/utils/task-filters';
 
 function ItemSeparator() {
   return <ThemedView style={styles.separator} />;
 }
 
+function ListHeader({
+  tasks,
+  searchQuery,
+  statusFilter,
+  filteredCount,
+  onSearchChange,
+  onStatusFilterChange,
+}: {
+  tasks: ReturnType<typeof useTasks>['tasks'];
+  searchQuery: string;
+  statusFilter: TaskFilterStatus;
+  filteredCount: number;
+  onSearchChange: (value: string) => void;
+  onStatusFilterChange: (value: TaskFilterStatus) => void;
+}) {
+  const filterSummary = formatFilteredTaskSummary(filteredCount, statusFilter, searchQuery);
+
+  return (
+    <ThemedView>
+      <TaskStatsDashboard
+        tasks={tasks}
+        activeFilter={statusFilter}
+        onFilterChange={onStatusFilterChange}
+      />
+      {filterSummary && (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.filterSummary}>
+          {filterSummary}
+        </ThemedText>
+      )}
+      <TaskListToolbar
+        searchQuery={searchQuery}
+        statusFilter={statusFilter}
+        onSearchChange={onSearchChange}
+        onStatusFilterChange={onStatusFilterChange}
+      />
+    </ThemedView>
+  );
+}
+
 export default function TaskListScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { tasks, isLoading, error, loadTasks, toggleTaskStatus } = useTasks();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskFilterStatus>('all');
@@ -42,8 +85,16 @@ export default function TaskListScreen() {
             <Pressable
               onPress={() => router.push('/task/new')}
               hitSlop={8}
-              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-              <ThemedText type="linkPrimary">Add</ThemedText>
+              style={({ pressed }) => [
+                styles.addButton,
+                { backgroundColor: theme.primary },
+                pressed && styles.pressed,
+              ]}
+              accessibilityLabel="Add task"
+              accessibilityRole="button">
+              <ThemedText type="smallBold" style={styles.addButtonText}>
+                +
+              </ThemedText>
             </Pressable>
           ),
         }}
@@ -51,7 +102,7 @@ export default function TaskListScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         {isLoading && tasks.length === 0 ? (
           <ThemedView style={styles.centered}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color={theme.primary} />
           </ThemedView>
         ) : error && tasks.length === 0 ? (
           <ThemedView style={styles.centered}>
@@ -74,9 +125,11 @@ export default function TaskListScreen() {
               />
             )}
             ListHeaderComponent={
-              <TaskListToolbar
+              <ListHeader
+                tasks={tasks}
                 searchQuery={searchQuery}
                 statusFilter={statusFilter}
+                filteredCount={filteredTasks.length}
                 onSearchChange={setSearchQuery}
                 onStatusFilterChange={setStatusFilter}
               />
@@ -87,7 +140,13 @@ export default function TaskListScreen() {
             ItemSeparatorComponent={ItemSeparator}
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
-            refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadTasks} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={loadTasks}
+                tintColor={theme.primary}
+              />
+            }
           />
         )}
       </SafeAreaView>
@@ -112,6 +171,9 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
   },
+  filterSummary: {
+    marginBottom: Spacing.two,
+  },
   listContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
@@ -121,7 +183,17 @@ const styles = StyleSheet.create({
     height: Spacing.two,
   },
   addButton: {
-    paddingHorizontal: Spacing.two,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.one,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    lineHeight: 24,
   },
   pressed: {
     opacity: 0.7,

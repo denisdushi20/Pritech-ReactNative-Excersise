@@ -34,7 +34,14 @@ export function TaskListToolbar({
         onChangeText={onSearchChange}
         placeholder="Search by title"
         placeholderTextColor={theme.textSecondary}
-        style={[styles.searchInput, { color: theme.text, borderColor: theme.backgroundSelected }]}
+        style={[
+          styles.searchInput,
+          {
+            color: theme.text,
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          },
+        ]}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
@@ -50,8 +57,13 @@ export function TaskListToolbar({
               onPress={() => onStatusFilterChange(option.value)}
               style={({ pressed }) => [pressed && styles.pressed]}>
               <ThemedView
-                type={isActive ? undefined : 'backgroundElement'}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}>
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: isActive ? theme.primary : theme.card,
+                    borderColor: isActive ? theme.primary : theme.border,
+                  },
+                ]}>
                 <ThemedText type="small" style={isActive && styles.filterChipTextActive}>
                   {option.label}
                 </ThemedText>
@@ -71,7 +83,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 16,
@@ -82,11 +94,9 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-  },
-  filterChipActive: {
-    backgroundColor: '#3C87F7',
   },
   filterChipTextActive: {
     color: '#FFFFFF',

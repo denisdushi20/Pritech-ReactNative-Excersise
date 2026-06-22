@@ -1,18 +1,35 @@
 # Pritech React Native Task Manager
 
-A simple React Native task management app built with Expo SDK 54, TypeScript, and Expo Router.
+A modern React Native task management app built with Expo SDK 54, TypeScript, and Expo Router.
 
 ## Features
 
-- View a list of tasks fetched from [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos) (3 starter tasks in English)
-- Add new tasks with title and description validation
+### Core requirements
+- Task list with interactive stats dashboard (total, pending, completed, completion %)
+- Add and **edit** tasks with title and description validation
 - Mark tasks as completed or pending
 - Delete tasks
-- View task details
-- Search tasks by title
-- Filter tasks by status (All / Pending / Completed)
-- Persist tasks locally with AsyncStorage
+- Task details screen
+- Fetch starter tasks from [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos) (3 English tasks)
 - Empty, loading, and error states
+
+### Starter tasks (English)
+- Buy groceries
+- Code today
+- Finish that task today
+
+### Bonus features
+- Search tasks by title
+- Filter by status via dashboard stat cards or filter chips
+- Persist tasks locally with AsyncStorage
+- Stack navigation between list, details, add, and edit screens
+
+### UI extras
+- Modern indigo/slate color system with soft dark mode (no pure black)
+- Tap Total / Pending / Done stat cards to filter the list instantly
+- Relative dates on list items (Today, Yesterday)
+- Contextual filter summary (e.g. "Showing 2 pending tasks")
+- Live completion progress bar on the home screen
 
 ## Requirements
 
@@ -46,15 +63,15 @@ npx expo start --web
 
 ```
 src/
-  app/              # Expo Router screens
-  components/tasks/ # Task-specific UI components
-  contexts/         # Shared React context providers
-  hooks/              # Custom hooks
+  app/                 # Expo Router screens (list, details, add, edit)
+  components/tasks/    # Task UI (list, form, dashboard, toolbar)
+  contexts/            # Shared React context providers
+  hooks/               # Custom hooks
   services/
-    api/              # API fetch and mapping
-    storage/          # AsyncStorage persistence
-  types/              # TypeScript interfaces
-  utils/              # Validation helpers
+    api/               # JSONPlaceholder fetch and mapping
+    storage/           # AsyncStorage persistence
+  types/               # TypeScript interfaces
+  utils/               # Validation, filters, stats, date formatting
 ```
 
 ## Tech stack
@@ -67,4 +84,13 @@ src/
 
 ## Screenshots
 
-Add screenshots or a short screen recording here before submission.
+Add 2–3 screenshots before submission:
+1. Home screen with stats dashboard and task list
+2. Add or edit task form
+3. Task details screen
+
+Replace this section with your images or a short screen recording link.
+
+## What was implemented
+
+This app fulfills the Pritech React Native technical task: full CRUD task management (including edit), API integration, input validation, reusable components, hooks-based state, and all four bonus features. The UI includes an interactive completion dashboard, relative dates, and a cohesive design system to demonstrate attention to detail beyond the minimum requirements.

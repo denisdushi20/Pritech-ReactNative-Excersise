@@ -82,6 +82,16 @@ export function useTasksState() {
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
   }, []);
 
+  const updateTask = useCallback((id: string, input: CreateTaskInput) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id
+          ? { ...task, title: input.title, description: input.description }
+          : task,
+      ),
+    );
+  }, []);
+
   return {
     tasks,
     isLoading,
@@ -91,6 +101,7 @@ export function useTasksState() {
     addTask,
     toggleTaskStatus,
     deleteTask,
+    updateTask,
   };
 }
 
