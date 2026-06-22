@@ -1,9 +1,10 @@
-import { FlatList, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { FlatList, Pressable, StyleSheet } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TaskEmptyState } from '@/components/tasks/task-empty-state';
 import { TaskListItem } from '@/components/tasks/task-list-item';
+import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { MOCK_TASKS } from '@/data/mock-tasks';
@@ -17,6 +18,18 @@ export default function TaskListScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push('/task/new')}
+              hitSlop={8}
+              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary">Add</ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <FlatList
           data={MOCK_TASKS}
@@ -50,5 +63,11 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: Spacing.two,
+  },
+  addButton: {
+    paddingHorizontal: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
