@@ -10,16 +10,24 @@ A modern React Native task management app built with Expo SDK 54, TypeScript, an
 - Mark tasks as completed or pending
 - Delete tasks
 - Task details screen
-- **Fetch from public API** — [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos?_limit=3) on every launch and pull-to-refresh
+- **Fetch from public API** — [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos?_limit=3) on every launch and pull-to-refresh; live API titles under **"Fetched from public API"**
+- **Mock tasks** — 3 seeded English demo tasks under **"Mock tasks"**
+- **Your tasks** — user-created tasks in their own section
 - Empty, loading, and error states
 
 ### API integration
 - Endpoint: `https://jsonplaceholder.typicode.com/todos?_limit=3`
-- API provides task `id` and completion `status`; titles/descriptions are mapped to English in the app
-- Pull-to-refresh re-syncs from the API while keeping user-created tasks
-- In-app label: "Synced from JSONPlaceholder at [time]"
+- Displays real API fields: `id`, `title`, and `completed` (mapped to task status)
+- Pull-to-refresh re-syncs from the API while keeping mock and user-created tasks
+- List split into three sections: **Fetched from public API**, **Mock tasks**, and **Your tasks**
+- Sync time shown under the API section header: "Synced from JSONPlaceholder at [time]"
 
-### Starter tasks (English, from API sync)
+### Example API tasks (from JSONPlaceholder)
+- delectus aut autem
+- quis ut nam facilis et officia qui
+- fugiat veniam minus
+
+### Mock tasks (seeded in app)
 - Buy groceries (today)
 - Code today (today)
 - Finish that task today (yesterday)
@@ -91,12 +99,17 @@ src/
 
 ## Screenshots
 
-Add 2–3 screenshots before submission:
-1. Home screen with stats dashboard, date filter, and task list
-2. Add or edit task form
-3. Task details screen
+**Home screen** — stats dashboard, date filter, search, and task list
 
-Replace this section with your images or a short screen recording link.
+![Home screen with stats dashboard and task list](docs/screenshots/home.png)
+
+**Add task** — form with date picker, title, and description fields
+
+![Add task form](docs/screenshots/add-task.png)
+
+**Task details** — title, status, description, created date, and actions
+
+![Task details screen](docs/screenshots/task-details.png)
 
 ## What was implemented
 

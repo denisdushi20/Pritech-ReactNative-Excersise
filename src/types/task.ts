@@ -2,7 +2,7 @@
 export type TaskStatus = 'pending' | 'completed';
 
 /** Where a task originated */
-export type TaskSource = 'api' | 'local';
+export type TaskSource = 'api' | 'mock' | 'local';
 
 /** Filter option for task list bonus feature */
 export type TaskFilterStatus = 'all' | TaskStatus;
@@ -23,7 +23,7 @@ export interface Task {
   status: TaskStatus;
   /** ISO 8601 date string — when the task was created */
   createdAt: string;
-  /** api = JSONPlaceholder sync, local = user-created */
+  /** api = JSONPlaceholder sync, mock = seeded demo tasks, local = user-created */
   source?: TaskSource;
 }
 

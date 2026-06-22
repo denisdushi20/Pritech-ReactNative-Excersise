@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { fetchTasksFromApi } from '@/services/api/tasks-api';
-import { loadTasksFromStorage, saveTasksToStorage } from '@/services/storage/tasks-storage';
+import { getMockTasks } from '@/services/mock/mock-tasks';
+import {
+  loadLastApiSyncFromStorage,
+  loadTasksFromStorage,
+  saveLastApiSyncToStorage,
+  saveTasksToStorage,
+} from '@/services/storage/tasks-storage';
 import type { CreateTaskInput, Task } from '@/types/task';
 import { dateKeyToIso } from '@/utils/format-date';
-import { mergeApiTasksWithLocal } from '@/utils/task-merge';
+import { mergeTasksWithSyncedSources } from '@/utils/task-merge';
 
 function createTaskId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -22,21 +28,36 @@ export function useTasksState() {
     setError(null);
 
     const storedTasks = await loadTasksFromStorage().catch(() => [] as Task[]);
+    const storedLastSync = await loadLastApiSyncFromStorage().catch(() => null);
+    const mockTasks = getMockTasks();
+
+    if (storedLastSync) {
+      setLastApiSyncAt(storedLastSync);
+    }
+
+    if (storedTasks.length > 0) {
+      setTasks(mergeTasksWithSyncedSources([], mockTasks, storedTasks));
+    } else {
+      setTasks(mockTasks);
+    }
 
     try {
       const apiTasks = await fetchTasksFromApi();
 
       setTasks((currentTasks) => {
         const mergeBase = storedTasks.length > 0 ? storedTasks : currentTasks;
-        return mergeApiTasksWithLocal(apiTasks, mergeBase);
+        return mergeTasksWithSyncedSources(apiTasks, mockTasks, mergeBase);
       });
 
-      setLastApiSyncAt(new Date().toISOString());
+      const syncedAt = new Date().toISOString();
+      setLastApiSyncAt(syncedAt);
+      await saveLastApiSyncToStorage(syncedAt).catch(() => undefined);
     } catch {
       if (storedTasks.length > 0) {
-        setTasks(storedTasks);
+        setTasks(mergeTasksWithSyncedSources([], mockTasks, storedTasks));
         setError('Unable to sync from API. Showing saved tasks.');
       } else {
+        setTasks(mockTasks);
         setError('Unable to load tasks. Pull to refresh or try again.');
       }
     } finally {

@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, SectionList, StyleSheet } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TaskDateFilterBar } from '@/components/tasks/task-date-filter';
 import { TaskEmptyState } from '@/components/tasks/task-empty-state';
 import { TaskListItem } from '@/components/tasks/task-list-item';
+import { TaskListSectionHeader } from '@/components/tasks/task-list-section-header';
 import { TaskListToolbar } from '@/components/tasks/task-list-toolbar';
 import { TaskStatsDashboard } from '@/components/tasks/task-stats-dashboard';
 import { ThemedText } from '@/components/themed-text';
@@ -13,7 +14,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/contexts/tasks-context';
 import { useTheme } from '@/hooks/use-theme';
-import type { TaskDateFilter, TaskFilterStatus } from '@/types/task';
+import type { Task, TaskDateFilter, TaskFilterStatus } from '@/types/task';
 import {
   formatFilteredTaskSummary,
   formatLastApiSync,
@@ -23,7 +24,18 @@ import {
   startOfDayIso,
   toDateKey,
 } from '@/utils/format-date';
-import { filterTasks, filterTasksByDate } from '@/utils/task-filters';
+import { filterTasks, filterTasksByDate, partitionTasksBySource } from '@/utils/task-filters';
+
+const API_SECTION_TITLE = 'Fetched from public API';
+const MOCK_SECTION_TITLE = 'Mock tasks';
+const YOUR_TASKS_SECTION_TITLE = 'Your tasks';
+
+type TaskListSection = {
+  key: string;
+  title: string;
+  subtitle?: string;
+  data: Task[];
+};
 
 function ItemSeparator() {
   return <ThemedView style={styles.separator} />;
@@ -36,7 +48,6 @@ function ListHeader({
   statusFilter,
   dateFilter,
   filteredCount,
-  lastApiSyncAt,
   onSearchChange,
   onStatusFilterChange,
   onDateFilterChange,
@@ -47,7 +58,6 @@ function ListHeader({
   statusFilter: TaskFilterStatus;
   dateFilter: TaskDateFilter;
   filteredCount: number;
-  lastApiSyncAt: string | null;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: TaskFilterStatus) => void;
   onDateFilterChange: (value: TaskDateFilter) => void;
@@ -58,7 +68,6 @@ function ListHeader({
     searchQuery,
     dateFilter,
   );
-  const apiSyncLabel = formatLastApiSync(lastApiSyncAt);
 
   return (
     <ThemedView>
@@ -67,11 +76,6 @@ function ListHeader({
         activeFilter={statusFilter}
         onFilterChange={onStatusFilterChange}
       />
-      {apiSyncLabel && (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.apiSyncLabel}>
-          {apiSyncLabel}
-        </ThemedText>
-      )}
       <TaskDateFilterBar
         tasks={tasks}
         dateFilter={dateFilter}
@@ -109,6 +113,48 @@ export default function TaskListScreen() {
     () => filterTasks(dateFilteredTasks, searchQuery, statusFilter, 'all'),
     [dateFilteredTasks, searchQuery, statusFilter],
   );
+
+  const allApiTasks = useMemo(
+    () => partitionTasksBySource(tasks).apiTasks,
+    [tasks],
+  );
+
+  const allMockTasks = useMemo(
+    () => partitionTasksBySource(tasks).mockTasks,
+    [tasks],
+  );
+
+  const sections = useMemo(() => {
+    const { apiTasks, mockTasks, yourTasks } = partitionTasksBySource(filteredTasks);
+    const result: TaskListSection[] = [];
+
+    if (allApiTasks.length > 0) {
+      result.push({
+        key: 'api',
+        title: API_SECTION_TITLE,
+        subtitle: formatLastApiSync(lastApiSyncAt) ?? undefined,
+        data: apiTasks,
+      });
+    }
+
+    if (allMockTasks.length > 0) {
+      result.push({
+        key: 'mock',
+        title: MOCK_SECTION_TITLE,
+        data: mockTasks,
+      });
+    }
+
+    if (yourTasks.length > 0) {
+      result.push({
+        key: 'local',
+        title: YOUR_TASKS_SECTION_TITLE,
+        data: yourTasks,
+      });
+    }
+
+    return result;
+  }, [filteredTasks, allApiTasks, allMockTasks, lastApiSyncAt]);
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || hasActiveDateFilter(dateFilter);
@@ -173,8 +219,8 @@ export default function TaskListScreen() {
             </Pressable>
           </ThemedView>
         ) : (
-          <FlatList
-            data={filteredTasks}
+          <SectionList
+            sections={sections}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <TaskListItem
@@ -183,6 +229,32 @@ export default function TaskListScreen() {
                 onToggleStatus={() => toggleTaskStatus(item.id)}
               />
             )}
+            renderSectionHeader={({ section }) => (
+              <TaskListSectionHeader title={section.title} subtitle={section.subtitle} />
+            )}
+            renderSectionFooter={({ section }) => {
+              if (section.data.length > 0) {
+                return null;
+              }
+
+              if (section.key === 'api' && allApiTasks.length > 0) {
+                return (
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.sectionEmptyHint}>
+                    No API tasks match your current filters. Try All / Pending or pull to refresh.
+                  </ThemedText>
+                );
+              }
+
+              if (section.key === 'mock' && allMockTasks.length > 0) {
+                return (
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.sectionEmptyHint}>
+                    No mock tasks match your current filters.
+                  </ThemedText>
+                );
+              }
+
+              return null;
+            }}
             ListHeaderComponent={
               <ListHeader
                 tasks={tasks}
@@ -191,7 +263,6 @@ export default function TaskListScreen() {
                 statusFilter={statusFilter}
                 dateFilter={dateFilter}
                 filteredCount={filteredTasks.length}
-                lastApiSyncAt={lastApiSyncAt}
                 onSearchChange={setSearchQuery}
                 onStatusFilterChange={setStatusFilter}
                 onDateFilterChange={setDateFilter}
@@ -201,6 +272,7 @@ export default function TaskListScreen() {
               <TaskEmptyState title={emptyTitle} subtitle={emptySubtitle} />
             }
             ItemSeparatorComponent={ItemSeparator}
+            stickySectionHeadersEnabled={false}
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
             refreshControl={
@@ -234,10 +306,10 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
   },
-  apiSyncLabel: {
+  filterSummary: {
     marginBottom: Spacing.two,
   },
-  filterSummary: {
+  sectionEmptyHint: {
     marginBottom: Spacing.two,
   },
   listContent: {

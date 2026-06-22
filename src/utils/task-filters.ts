@@ -1,5 +1,6 @@
 import type { Task, TaskDateFilter, TaskFilterStatus } from '@/types/task';
 import { matchesDateFilter } from '@/utils/format-date';
+import { isApiTask, isLocalTask, isMockTask } from '@/utils/task-merge';
 
 export function filterTasks(
   tasks: Task[],
@@ -21,4 +22,12 @@ export function filterTasks(
 
 export function filterTasksByDate(tasks: Task[], dateFilter: TaskDateFilter): Task[] {
   return tasks.filter((task) => matchesDateFilter(task.createdAt, dateFilter));
+}
+
+export function partitionTasksBySource(tasks: Task[]) {
+  const apiTasks = tasks.filter(isApiTask);
+  const mockTasks = tasks.filter(isMockTask);
+  const yourTasks = tasks.filter(isLocalTask);
+
+  return { apiTasks, mockTasks, yourTasks };
 }
