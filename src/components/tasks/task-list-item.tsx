@@ -8,51 +8,92 @@ import type { Task } from '@/types/task';
 interface TaskListItemProps {
   task: Task;
   onPress?: () => void;
+  onToggleStatus?: () => void;
 }
 
-export function TaskListItem({ task, onPress }: TaskListItemProps) {
+export function TaskListItem({ task, onPress, onToggleStatus }: TaskListItemProps) {
   const isCompleted = task.status === 'completed';
   const formattedDate = new Date(task.createdAt).toLocaleDateString();
 
-  const card = (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedView style={styles.header}>
-        <ThemedText
-          type="default"
-          themeColor={isCompleted ? 'textSecondary' : 'text'}
-          style={[styles.title, isCompleted && styles.completedTitle]}
-          numberOfLines={1}>
-          {task.title}
-        </ThemedText>
-        <ThemedView type="backgroundSelected" style={styles.badge}>
-          <ThemedText type="small">{isCompleted ? 'Completed' : 'Pending'}</ThemedText>
-        </ThemedView>
-      </ThemedView>
-
-      {task.description.length > 0 && (
-        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-          {task.description}
-        </ThemedText>
+  const content = (
+    <ThemedView style={styles.row}>
+      {onToggleStatus && (
+        <Pressable
+          onPress={onToggleStatus}
+          style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}>
+          <ThemedView type="backgroundSelected" style={[styles.checkbox, isCompleted && styles.checkboxChecked]}>
+            {isCompleted && (
+              <ThemedText type="smallBold" style={styles.checkmark}>
+                ✓
+              </ThemedText>
+            )}
+          </ThemedView>
+        </Pressable>
       )}
 
-      <ThemedText type="small" themeColor="textSecondary">
-        {formattedDate}
-      </ThemedText>
+      <Pressable
+        onPress={onPress}
+        disabled={!onPress}
+        style={({ pressed }) => [styles.content, pressed && onPress && styles.pressed]}>
+        <ThemedView type="backgroundElement" style={styles.card}>
+          <ThemedView style={styles.header}>
+            <ThemedText
+              type="default"
+              themeColor={isCompleted ? 'textSecondary' : 'text'}
+              style={[styles.title, isCompleted && styles.completedTitle]}
+              numberOfLines={1}>
+              {task.title}
+            </ThemedText>
+            <ThemedView type="backgroundSelected" style={styles.badge}>
+              <ThemedText type="small">{isCompleted ? 'Completed' : 'Pending'}</ThemedText>
+            </ThemedView>
+          </ThemedView>
+
+          {task.description.length > 0 && (
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+              {task.description}
+            </ThemedText>
+          )}
+
+          <ThemedText type="small" themeColor="textSecondary">
+            {formattedDate}
+          </ThemedText>
+        </ThemedView>
+      </Pressable>
     </ThemedView>
   );
 
-  if (!onPress) {
-    return card;
-  }
-
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
-      {card}
-    </Pressable>
-  );
+  return content;
 }
 
 const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: Spacing.two,
+  },
+  toggle: {
+    justifyContent: 'center',
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#3C87F7',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    lineHeight: 16,
+  },
+  content: {
+    flex: 1,
+  },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,

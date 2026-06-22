@@ -1,14 +1,16 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { getTaskById } from '@/data/mock-tasks';
+import { useTasks } from '@/contexts/tasks-context';
 
 export default function TaskDetailsScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { getTaskById, toggleTaskStatus, deleteTask } = useTasks();
   const task = typeof id === 'string' ? getTaskById(id) : undefined;
 
   if (!task) {
@@ -28,6 +30,15 @@ export default function TaskDetailsScreen() {
     month: 'long',
     day: 'numeric',
   });
+
+  const handleToggle = () => {
+    toggleTaskStatus(task.id);
+  };
+
+  const handleDelete = () => {
+    deleteTask(task.id);
+    router.back();
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -58,6 +69,24 @@ export default function TaskDetailsScreen() {
             <ThemedText type="default" themeColor="textSecondary">
               {formattedDate}
             </ThemedText>
+          </ThemedView>
+
+          <ThemedView style={styles.actions}>
+            <Pressable
+              onPress={handleToggle}
+              style={({ pressed }) => [styles.button, styles.primaryButton, pressed && styles.pressed]}>
+              <ThemedText type="smallBold" style={styles.primaryButtonText}>
+                {isCompleted ? 'Mark as Pending' : 'Mark as Completed'}
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={handleDelete}
+              style={({ pressed }) => [styles.button, styles.dangerButton, pressed && styles.pressed]}>
+              <ThemedText type="smallBold" style={styles.dangerButtonText}>
+                Delete Task
+              </ThemedText>
+            </Pressable>
           </ThemedView>
         </ScrollView>
       </SafeAreaView>
@@ -98,5 +127,29 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  actions: {
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  button: {
+    borderRadius: Spacing.two,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#3C87F7',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+  },
+  dangerButton: {
+    backgroundColor: '#FEECEC',
+  },
+  dangerButtonText: {
+    color: '#E5484D',
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
