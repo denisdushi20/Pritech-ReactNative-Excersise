@@ -1,8 +1,18 @@
 /** Task completion status per PDF spec */
 export type TaskStatus = 'pending' | 'completed';
 
+/** Where a task originated */
+export type TaskSource = 'api' | 'local';
+
 /** Filter option for task list bonus feature */
 export type TaskFilterStatus = 'all' | TaskStatus;
+
+/** Filter tasks by created date */
+export type TaskDateFilter =
+  | 'all'
+  | 'today'
+  | 'yesterday'
+  | { type: 'date'; dateKey: string };
 
 /** Core task model used across list, details, and storage */
 export interface Task {
@@ -13,12 +23,16 @@ export interface Task {
   status: TaskStatus;
   /** ISO 8601 date string — when the task was created */
   createdAt: string;
+  /** api = JSONPlaceholder sync, local = user-created */
+  source?: TaskSource;
 }
 
 /** Payload when creating a new task (id + createdAt set by app logic) */
 export interface CreateTaskInput {
   title: string;
   description: string;
+  /** Optional calendar day; normalized to local noon ISO when saving */
+  dateKey?: string;
 }
 
 /** Payload when editing an existing task */

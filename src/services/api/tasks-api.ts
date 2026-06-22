@@ -1,19 +1,23 @@
+import { startOfDayIso } from '@/utils/format-date';
 import type { ApiTodo, Task } from '@/types/task';
 
-const TASKS_API_URL = 'https://jsonplaceholder.typicode.com/todos?_limit=3';
+export const TASKS_API_URL = 'https://jsonplaceholder.typicode.com/todos?_limit=3';
 
 const ENGLISH_TASK_CONTENT = [
   {
     title: 'Buy groceries',
     description: 'Milk, eggs, and bread',
+    dayOffset: 0,
   },
   {
     title: 'Code today',
     description: 'Work on the React Native task app',
+    dayOffset: 0,
   },
   {
     title: 'Finish that task today',
     description: 'Wrap up remaining features before EOD',
+    dayOffset: -1,
   },
 ] as const;
 
@@ -25,7 +29,8 @@ export function mapApiTodoToTask(todo: ApiTodo, index: number): Task {
     title: content.title,
     description: content.description,
     status: todo.completed ? 'completed' : 'pending',
-    createdAt: new Date(Date.now() - (index + 1) * 86_400_000).toISOString(),
+    createdAt: startOfDayIso(content.dayOffset),
+    source: 'api',
   };
 }
 

@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } fr
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TaskDateFilterBar } from '@/components/tasks/task-date-filter';
 import { TaskEmptyState } from '@/components/tasks/task-empty-state';
 import { TaskListItem } from '@/components/tasks/task-list-item';
 import { TaskListToolbar } from '@/components/tasks/task-list-toolbar';
@@ -12,9 +13,17 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/contexts/tasks-context';
 import { useTheme } from '@/hooks/use-theme';
-import type { TaskFilterStatus } from '@/types/task';
-import { formatFilteredTaskSummary } from '@/utils/format-date';
-import { filterTasks } from '@/utils/task-filters';
+import type { TaskDateFilter, TaskFilterStatus } from '@/types/task';
+import {
+  formatFilteredTaskSummary,
+  formatLastApiSync,
+  getTodayDateKey,
+  hasActiveDateFilter,
+  isSpecificDateFilter,
+  startOfDayIso,
+  toDateKey,
+} from '@/utils/format-date';
+import { filterTasks, filterTasksByDate } from '@/utils/task-filters';
 
 function ItemSeparator() {
   return <ThemedView style={styles.separator} />;
@@ -22,27 +31,51 @@ function ItemSeparator() {
 
 function ListHeader({
   tasks,
+  dateFilteredTasks,
   searchQuery,
   statusFilter,
+  dateFilter,
   filteredCount,
+  lastApiSyncAt,
   onSearchChange,
   onStatusFilterChange,
+  onDateFilterChange,
 }: {
   tasks: ReturnType<typeof useTasks>['tasks'];
+  dateFilteredTasks: ReturnType<typeof useTasks>['tasks'];
   searchQuery: string;
   statusFilter: TaskFilterStatus;
+  dateFilter: TaskDateFilter;
   filteredCount: number;
+  lastApiSyncAt: string | null;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: TaskFilterStatus) => void;
+  onDateFilterChange: (value: TaskDateFilter) => void;
 }) {
-  const filterSummary = formatFilteredTaskSummary(filteredCount, statusFilter, searchQuery);
+  const filterSummary = formatFilteredTaskSummary(
+    filteredCount,
+    statusFilter,
+    searchQuery,
+    dateFilter,
+  );
+  const apiSyncLabel = formatLastApiSync(lastApiSyncAt);
 
   return (
     <ThemedView>
       <TaskStatsDashboard
-        tasks={tasks}
+        tasks={dateFilteredTasks}
         activeFilter={statusFilter}
         onFilterChange={onStatusFilterChange}
+      />
+      {apiSyncLabel && (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.apiSyncLabel}>
+          {apiSyncLabel}
+        </ThemedText>
+      )}
+      <TaskDateFilterBar
+        tasks={tasks}
+        dateFilter={dateFilter}
+        onDateFilterChange={onDateFilterChange}
       />
       {filterSummary && (
         <ThemedText type="small" themeColor="textSecondary" style={styles.filterSummary}>
@@ -62,16 +95,42 @@ function ListHeader({
 export default function TaskListScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { tasks, isLoading, error, loadTasks, toggleTaskStatus } = useTasks();
+  const { tasks, isLoading, error, lastApiSyncAt, loadTasks, toggleTaskStatus } = useTasks();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskFilterStatus>('all');
+  const [dateFilter, setDateFilter] = useState<TaskDateFilter>('all');
 
-  const filteredTasks = useMemo(
-    () => filterTasks(tasks, searchQuery, statusFilter),
-    [tasks, searchQuery, statusFilter],
+  const dateFilteredTasks = useMemo(
+    () => filterTasksByDate(tasks, dateFilter),
+    [tasks, dateFilter],
   );
 
-  const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== 'all';
+  const filteredTasks = useMemo(
+    () => filterTasks(dateFilteredTasks, searchQuery, statusFilter, 'all'),
+    [dateFilteredTasks, searchQuery, statusFilter],
+  );
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 || statusFilter !== 'all' || hasActiveDateFilter(dateFilter);
+
+  const handleAddTask = () => {
+    if (isSpecificDateFilter(dateFilter)) {
+      router.push({ pathname: '/task/new', params: { date: dateFilter.dateKey } });
+      return;
+    }
+
+    if (dateFilter === 'today') {
+      router.push({ pathname: '/task/new', params: { date: getTodayDateKey() } });
+      return;
+    }
+
+    if (dateFilter === 'yesterday') {
+      router.push({ pathname: '/task/new', params: { date: toDateKey(startOfDayIso(-1)) } });
+      return;
+    }
+
+    router.push('/task/new');
+  };
   const emptyTitle = hasActiveFilters ? 'No matching tasks' : 'No tasks yet';
   const emptySubtitle = hasActiveFilters
     ? 'Try a different search or filter'
@@ -83,7 +142,7 @@ export default function TaskListScreen() {
         options={{
           headerRight: () => (
             <Pressable
-              onPress={() => router.push('/task/new')}
+              onPress={handleAddTask}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.addButton,
@@ -127,11 +186,15 @@ export default function TaskListScreen() {
             ListHeaderComponent={
               <ListHeader
                 tasks={tasks}
+                dateFilteredTasks={dateFilteredTasks}
                 searchQuery={searchQuery}
                 statusFilter={statusFilter}
+                dateFilter={dateFilter}
                 filteredCount={filteredTasks.length}
+                lastApiSyncAt={lastApiSyncAt}
                 onSearchChange={setSearchQuery}
                 onStatusFilterChange={setStatusFilter}
+                onDateFilterChange={setDateFilter}
               />
             }
             ListEmptyComponent={
@@ -170,6 +233,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     textAlign: 'center',
+  },
+  apiSyncLabel: {
+    marginBottom: Spacing.two,
   },
   filterSummary: {
     marginBottom: Spacing.two,

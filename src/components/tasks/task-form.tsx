@@ -1,15 +1,19 @@
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { CreateTaskInput } from '@/types/task';
+import { dateKeyToDate, formatDateKeyLong, getTodayDateKey, toDateKey } from '@/utils/format-date';
 import { hasValidationErrors, validateCreateTaskInput } from '@/utils/task-validation';
 
 interface TaskFormProps {
   initialValues?: CreateTaskInput;
+  initialDateKey?: string;
+  showDateField?: boolean;
   submitLabel?: string;
   onSubmit: (input: CreateTaskInput) => void;
   onCancel?: () => void;
@@ -17,6 +21,8 @@ interface TaskFormProps {
 
 export function TaskForm({
   initialValues,
+  initialDateKey,
+  showDateField = false,
   submitLabel = 'Save Task',
   onSubmit,
   onCancel,
@@ -24,7 +30,24 @@ export function TaskForm({
   const theme = useTheme();
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
+  const [dateKey, setDateKey] = useState(initialDateKey ?? getTodayDateKey());
+  const [showPicker, setShowPicker] = useState(false);
   const [errors, setErrors] = useState<ReturnType<typeof validateCreateTaskInput>>({});
+
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+    }
+
+    if (event.type === 'dismissed') {
+      setShowPicker(false);
+      return;
+    }
+
+    if (selectedDate) {
+      setDateKey(toDateKey(selectedDate.toISOString()));
+    }
+  };
 
   const handleSubmit = () => {
     const input: CreateTaskInput = { title, description };
@@ -38,6 +61,7 @@ export function TaskForm({
     onSubmit({
       title: title.trim(),
       description: description.trim(),
+      ...(showDateField ? { dateKey } : {}),
     });
   };
 
@@ -52,6 +76,48 @@ export function TaskForm({
 
   return (
     <ThemedView style={styles.container}>
+      {showDateField && (
+        <ThemedView style={styles.field}>
+          <ThemedText type="smallBold">Date</ThemedText>
+          <Pressable
+            onPress={() => setShowPicker(true)}
+            style={({ pressed }) => [
+              styles.dateRow,
+              {
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+              },
+              pressed && styles.pressed,
+            ]}>
+            <ThemedText type="default">{formatDateKeyLong(dateKey)}</ThemedText>
+            <ThemedText type="linkPrimary">Change</ThemedText>
+          </Pressable>
+          {showPicker && (
+            <ThemedView style={styles.pickerContainer}>
+              <DateTimePicker
+                value={dateKeyToDate(dateKey)}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+              />
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  onPress={() => setShowPicker(false)}
+                  style={({ pressed }) => [
+                    styles.doneButton,
+                    { backgroundColor: theme.primary },
+                    pressed && styles.pressed,
+                  ]}>
+                  <ThemedText type="smallBold" style={{ color: theme.primaryText }}>
+                    Done
+                  </ThemedText>
+                </Pressable>
+              )}
+            </ThemedView>
+          )}
+        </ThemedView>
+      )}
+
       <ThemedView style={styles.field}>
         <ThemedText type="smallBold">Title</ThemedText>
         <TextInput
@@ -127,6 +193,23 @@ const styles = StyleSheet.create({
   },
   field: {
     gap: Spacing.two,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  pickerContainer: {
+    gap: Spacing.two,
+  },
+  doneButton: {
+    borderRadius: Spacing.three,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
   },
   input: {
     borderWidth: 1,
