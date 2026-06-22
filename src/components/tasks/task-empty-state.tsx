@@ -4,12 +4,20 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 
-export function TaskEmptyState() {
+interface TaskEmptyStateProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export function TaskEmptyState({
+  title = 'No tasks yet',
+  subtitle = 'Add a task to get started',
+}: TaskEmptyStateProps) {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="subtitle">No tasks yet</ThemedText>
+      <ThemedText type="subtitle">{title}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
-        Add a task to get started
+        {subtitle}
       </ThemedText>
     </ThemedView>
   );

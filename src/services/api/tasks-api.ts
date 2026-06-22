@@ -1,14 +1,31 @@
 import type { ApiTodo, Task } from '@/types/task';
 
-const TASKS_API_URL = 'https://jsonplaceholder.typicode.com/todos?_limit=15';
+const TASKS_API_URL = 'https://jsonplaceholder.typicode.com/todos?_limit=3';
 
-export function mapApiTodoToTask(todo: ApiTodo): Task {
+const ENGLISH_TASK_CONTENT = [
+  {
+    title: 'Buy groceries',
+    description: 'Milk, eggs, and bread',
+  },
+  {
+    title: 'Finish React Native exercise',
+    description: 'Complete the task list and details screens',
+  },
+  {
+    title: 'Update README',
+    description: 'Add setup instructions and screenshots',
+  },
+] as const;
+
+export function mapApiTodoToTask(todo: ApiTodo, index: number): Task {
+  const content = ENGLISH_TASK_CONTENT[index] ?? ENGLISH_TASK_CONTENT[0];
+
   return {
     id: String(todo.id),
-    title: todo.title.charAt(0).toUpperCase() + todo.title.slice(1),
-    description: '',
+    title: content.title,
+    description: content.description,
     status: todo.completed ? 'completed' : 'pending',
-    createdAt: new Date(Date.now() - todo.id * 86_400_000).toISOString(),
+    createdAt: new Date(Date.now() - (index + 1) * 86_400_000).toISOString(),
   };
 }
 

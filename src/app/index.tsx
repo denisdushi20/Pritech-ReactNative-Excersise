@@ -1,13 +1,17 @@
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TaskEmptyState } from '@/components/tasks/task-empty-state';
 import { TaskListItem } from '@/components/tasks/task-list-item';
+import { TaskListToolbar } from '@/components/tasks/task-list-toolbar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/contexts/tasks-context';
+import type { TaskFilterStatus } from '@/types/task';
+import { filterTasks } from '@/utils/task-filters';
 
 function ItemSeparator() {
   return <ThemedView style={styles.separator} />;
@@ -16,6 +20,19 @@ function ItemSeparator() {
 export default function TaskListScreen() {
   const router = useRouter();
   const { tasks, isLoading, error, loadTasks, toggleTaskStatus } = useTasks();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TaskFilterStatus>('all');
+
+  const filteredTasks = useMemo(
+    () => filterTasks(tasks, searchQuery, statusFilter),
+    [tasks, searchQuery, statusFilter],
+  );
+
+  const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== 'all';
+  const emptyTitle = hasActiveFilters ? 'No matching tasks' : 'No tasks yet';
+  const emptySubtitle = hasActiveFilters
+    ? 'Try a different search or filter'
+    : 'Add a task to get started';
 
   return (
     <ThemedView style={styles.container}>
@@ -47,7 +64,7 @@ export default function TaskListScreen() {
           </ThemedView>
         ) : (
           <FlatList
-            data={tasks}
+            data={filteredTasks}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <TaskListItem
@@ -56,9 +73,20 @@ export default function TaskListScreen() {
                 onToggleStatus={() => toggleTaskStatus(item.id)}
               />
             )}
-            ListEmptyComponent={TaskEmptyState}
+            ListHeaderComponent={
+              <TaskListToolbar
+                searchQuery={searchQuery}
+                statusFilter={statusFilter}
+                onSearchChange={setSearchQuery}
+                onStatusFilterChange={setStatusFilter}
+              />
+            }
+            ListEmptyComponent={
+              <TaskEmptyState title={emptyTitle} subtitle={emptySubtitle} />
+            }
             ItemSeparatorComponent={ItemSeparator}
             contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadTasks} />}
           />
         )}

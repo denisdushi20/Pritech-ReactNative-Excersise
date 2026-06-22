@@ -4,11 +4,14 @@ A simple React Native task management app built with Expo SDK 54, TypeScript, an
 
 ## Features
 
-- View a list of tasks fetched from [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos)
+- View a list of tasks fetched from [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos) (3 starter tasks in English)
 - Add new tasks with title and description validation
 - Mark tasks as completed or pending
 - Delete tasks
 - View task details
+- Search tasks by title
+- Filter tasks by status (All / Pending / Completed)
+- Persist tasks locally with AsyncStorage
 - Empty, loading, and error states
 
 ## Requirements
@@ -47,7 +50,9 @@ src/
   components/tasks/ # Task-specific UI components
   contexts/         # Shared React context providers
   hooks/              # Custom hooks
-  services/api/       # API fetch and mapping
+  services/
+    api/              # API fetch and mapping
+    storage/          # AsyncStorage persistence
   types/              # TypeScript interfaces
   utils/              # Validation helpers
 ```
@@ -58,6 +63,7 @@ src/
 - TypeScript
 - Expo Router (stack navigation)
 - JSONPlaceholder public API
+- AsyncStorage for on-device persistence
 
 ## Screenshots
 

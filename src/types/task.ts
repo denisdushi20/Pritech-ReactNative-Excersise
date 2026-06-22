@@ -1,6 +1,9 @@
 /** Task completion status per PDF spec */
 export type TaskStatus = 'pending' | 'completed';
 
+/** Filter option for task list bonus feature */
+export type TaskFilterStatus = 'all' | TaskStatus;
+
 /** Core task model used across list, details, and storage */
 export interface Task {
   /** Unique identifier (UUID for user-created; number-as-string from API) */
