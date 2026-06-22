@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -7,13 +7,14 @@ import type { Task } from '@/types/task';
 
 interface TaskListItemProps {
   task: Task;
+  onPress?: () => void;
 }
 
-export function TaskListItem({ task }: TaskListItemProps) {
+export function TaskListItem({ task, onPress }: TaskListItemProps) {
   const isCompleted = task.status === 'completed';
   const formattedDate = new Date(task.createdAt).toLocaleDateString();
 
-  return (
+  const card = (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedView style={styles.header}>
         <ThemedText
@@ -39,6 +40,16 @@ export function TaskListItem({ task }: TaskListItemProps) {
       </ThemedText>
     </ThemedView>
   );
+
+  if (!onPress) {
+    return card;
+  }
+
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
+      {card}
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -63,5 +74,8 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
